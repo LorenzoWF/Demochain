@@ -32,18 +32,18 @@ func HandleStream(s net.Stream) {
 }
 
 func ReadData(rw *bufio.ReadWriter) {
-
 	for {
 		str, err := rw.ReadString('\n')
 		if err != nil {
-			log.Fatal(err)
+			log.Print("Error! Not Conencted.")
+			//continue
+			//log.Fatal(err)
 		}
 
 		if str == "" {
 			return
 		}
 		if str != "\n" {
-
 			chain := make([]core.Block, 0)
 			if err := json.Unmarshal([]byte(str), &chain); err != nil {
 				log.Fatal(err)
@@ -61,13 +61,14 @@ func ReadData(rw *bufio.ReadWriter) {
 				// Reset console color: 	\x1b[0m
 				fmt.Printf("\x1b[32m%s\x1b[0m> ", string(bytes))
 			}
+
 			mutex.Unlock()
 		}
 	}
 }
 
 func WriteData(rw *bufio.ReadWriter) {
-
+	//IMPRIMI OS DADOS QUE FOI INSERIDO NO MESMO TERMINAL
 	go func() {
 		for {
 			time.Sleep(5 * time.Second)
@@ -86,6 +87,8 @@ func WriteData(rw *bufio.ReadWriter) {
 		}
 	}()
 
+	log.Printf("PASSOU DO GO FUNC DO WRITE DATA")
+
 	stdReader := bufio.NewReader(os.Stdin)
 
 	for {
@@ -99,7 +102,9 @@ func WriteData(rw *bufio.ReadWriter) {
 		sendData = strings.Replace(sendData, "\r", "", -1)
 		bpm, err := strconv.Atoi(sendData)
 		if err != nil {
-			log.Fatal(err)
+			log.Print("Error! Invalid Data.")
+			continue
+			//log.Fatal(err)
 		}
 		newBlock := core.GenerateBlock(Blockchain[len(Blockchain)-1], bpm)
 

@@ -14,6 +14,7 @@ type Block struct {
 	BPM       int
 	Hash      string
 	PrevHash  string
+	HLPrevHash string
 }
 
 // make sure block is valid by checking index, and comparing the hash of the previous block
@@ -35,7 +36,7 @@ func IsBlockValid(newBlock, oldBlock Block) bool {
 
 // SHA256 hashing
 func CalculateHash(block Block) string {
-	record := strconv.Itoa(block.Index) + block.Timestamp + strconv.Itoa(block.BPM) + block.PrevHash
+	record := strconv.Itoa(block.Index) + block.Timestamp + strconv.Itoa(block.BPM) + block.PrevHash + block.HLPrevHash
 	h := sha256.New()
 	h.Write([]byte(record))
 	hashed := h.Sum(nil)

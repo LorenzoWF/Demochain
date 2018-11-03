@@ -18,6 +18,8 @@ import (
 	"github.com/joho/godotenv"
 
 
+	protocol "github.com/libp2p/go-libp2p-protocol"
+
 	core "core"
 	network "network"
 	storage "storage"
@@ -32,6 +34,10 @@ func main() {
 
 	//Carrega as configuracoes
 	nodeIP := os.Getenv("IP")
+
+	var networkName protocol.ID
+	networkName = protocol.ID(os.Getenv("NETWORK_NAME"))
+
 	cryptographicType, _ := strconv.Atoi(os.Getenv("CRYPTOGRAPHIC_TYPE"))
 	cryptographicBits, _ := strconv.Atoi(os.Getenv("CRYPTOGRAPHIC_BITS"))
 
@@ -39,7 +45,7 @@ func main() {
 
 	t := time.Now() //PEGA A HORA ATUAL
 	genesisBlock := core.Block{} //CRIA O GENESIS BLOCK, TIPO
-	genesisBlock = core.Block{0, t.String(), 0, core.CalculateHash(genesisBlock), ""} //CRIA O GENESIS BLOCK
+	genesisBlock = core.Block{0, t.String(), 0, core.CalculateHash(genesisBlock), "", ""} //CRIA O GENESIS BLOCK
 
 	storage.Blockchain = append(storage.Blockchain, genesisBlock) //ADICIONA NA BLOCKCHAIN
 
@@ -50,43 +56,38 @@ func main() {
 	golog.SetAllLoggers(gologging.INFO) // Change to DEBUG for extra info
 
 	// Parse options from the command line
-	ipNode := flag.String("i", "", "IP for connection")
+	//ipNode := flag.String("i", "", "IP for connection")
 	portNode := flag.Int("p", 0, "wait for incoming connections")
 	target := flag.String("d", "", "target peer to dial")
-	secio := flag.Bool("secio", false, "enable secio")
-	seed := flag.Int64("seed", 0, "set random seed for id generation")
+	//seed := flag.Int64("seed", 0, "set random seed for id generation")
 	flag.Parse()
-
-
-	fmt.Printf("portNode = %d\n", *portNode)
-	fmt.Printf("target = %s\n", *target)
-	fmt.Printf("secio = %t\n", *secio)
-	fmt.Printf("seed = %d\n", *seed)
 
 	if *portNode == 0 {
 		log.Fatal("Please provide a port to bind on with -p") //INTERROMPE A EXECUCAO
 	}
 
 	// Make a host that listens on the given multiaddress
-	ha, err := network.MakeBasicHost(Node.IP, *portNode, *secio, *seed, Node.CryptographicType, Node.CryptographicBits)
+	ha, err := network.MakeBasicHost(Node.IP, *portNode, []byte("TESTE"), Node.CryptographicType, Node.CryptographicBits)
 	if err != nil {
 		log.Fatal(err) //INTERROMPE A EXECUCAO
 	}
 
 	if *target == "" {
-		log.Println("listening for connections")
 		// Set a stream handler on host A. /p2p/1.0.0 is
+		log.Println("listening for connections")
 		// a user-defined protocol name.
-		ha.SetStreamHandler("/p2p/1.0.0", storage.HandleStream)
+
+		ha.SetStreamHandler(networkName, storage.HandleStream)
 
 		select {} // hang forever
 		/**** This is where the listener code ends ****/
 	} else {
-		ha.SetStreamHandler("/p2p/1.0.0", storage.HandleStream)
+		//ACHO QUE NAO PRECISA
+		ha.SetStreamHandler(networkName, storage.HandleStream)
 
 		// The following code extracts target's peer ID from the
-		// given multiaddress
 		ipfsaddr, err := ma.NewMultiaddr(*target)
+		// given multiaddress
 		if err != nil {
 			log.Fatalln(err)
 		}
@@ -115,7 +116,7 @@ func main() {
 		// make a new stream from host B to host A
 		// it should be handled on host A by the handler we set above because
 		// we use the same /p2p/1.0.0 protocol
-		s, err := ha.NewStream(context.Background(), peerid, "/p2p/1.0.0")
+		s, err := ha.NewStream(context.Background(), peerid, networkName)
 		if err != nil {
 			log.Fatalln(err)
 		}
@@ -126,7 +127,8 @@ func main() {
 		go storage.WriteData(rw)
 		go storage.ReadData(rw)
 
-		select {} // hang forever
+		//CRIAR PARTE QUE
 
+		select {} // hang forever
 	}
 }
