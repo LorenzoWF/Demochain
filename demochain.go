@@ -57,8 +57,9 @@ func main() {
 	nodeEDNodeTarget 			 := os.Getenv("EDGE_NODE_TARGET")
 	nodePathBlockchainFile := os.Getenv("PATH_BLOCKCHAIN_FILE")
 	nodeHLNodes						 := os.Getenv("HL_NODES")
+	nodeConsensus					 := os.Getenv("CONSENSUS")
 
-	node := core.NodeLoad(nodeIP, nodePort, nodeNetworkName, nodePathPrivateKey, nodeCryptographicType, nodeCryptographicBits, nodeEDNodeTarget, nodePathBlockchainFile, nodeHLNodes)
+	node := core.NodeLoad(nodeIP, nodePort, nodeNetworkName, nodePathPrivateKey, nodeCryptographicType, nodeCryptographicBits, nodeEDNodeTarget, nodePathBlockchainFile, nodeHLNodes, nodeConsensus)
 
 	// Make a host that listens on the given multiaddress
 	ha, err := network.MakeBasicHost(node)

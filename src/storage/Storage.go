@@ -83,23 +83,23 @@ func ReadData(rw *bufio.ReadWriter) {
 			chain := make([]core.Block, 0)
 			err := json.Unmarshal([]byte(str), &chain);
 
-			//log.Println(len(chain))
-
 			if err != nil {
 				log.Fatal(err)
 			}
 
 			mutex.Lock()
 			if len(chain) > len(Blockchain) {
-				Blockchain = chain
-				bytes, err := json.MarshalIndent(Blockchain, "", "  ")
-				if err != nil {
-					log.Fatal(err)
+				if core.IsBlockValid(chain[len(chain)-1], Blockchain[len(Blockchain)-1], Node.Consensus) { //VERIFICACAO DE HASH
+					Blockchain = chain
+					bytes, err := json.MarshalIndent(Blockchain, "", "  ")
+					if err != nil {
+						log.Fatal(err)
+					}
+					writeFile(bytes)
+					// Green console color: 	\x1b[32m
+					// Reset console color: 	\x1b[0m
+					fmt.Printf("\x1b[32m%s\x1b[0m> ", string(bytes))
 				}
-				writeFile(bytes)
-				// Green console color: 	\x1b[32m
-				// Reset console color: 	\x1b[0m
-				fmt.Printf("\x1b[32m%s\x1b[0m> ", string(bytes))
 			}
 
 			mutex.Unlock()
@@ -165,17 +165,30 @@ func WriteData(rw *bufio.ReadWriter) {
 		}
 
 
-		bpm, err := strconv.Atoi(sendData)
+		data, err := strconv.Atoi(sendData)
 		if err != nil {
 			fmt.Printf("\x1b[31m%s\x1b[0m", "Error! Invalid Data.\n")
 			continue
 		}
-		newBlock := core.GenerateBlock(Blockchain[len(Blockchain)-1], bpm)
+		newBlock := core.GenerateBlock(Blockchain[len(Blockchain)-1], data, Node.Consensus, 1)
 
-		if core.IsBlockValid(newBlock, Blockchain[len(Blockchain)-1]) {
+		hashAntigo := Blockchain[len(Blockchain)-1].Hash
+		hashNovo := newBlock.Hash
+
+		/*if (newBlock.Index <= Blockchain[len(Blockchain)-1].Index) {
+			newBlock.Index = Blockchain[len(Blockchain)-1].Index + 1
+		}*/
+
+		//BlockchainLoad()
+
+		if core.IsBlockValid(newBlock, Blockchain[len(Blockchain)-1], Node.Consensus) {
 			mutex.Lock()
 			Blockchain = append(Blockchain, newBlock)
 			mutex.Unlock()
+		} else {
+			log.Println("Bloco invalido")
+			log.Println("Hash antigo: %s", hashAntigo)
+			log.Println("Hash novo: %s", hashNovo)
 		}
 
 		bytes, err := json.Marshal(Blockchain)
@@ -208,15 +221,8 @@ func BlockchainLoad() {
 	}
 
 	if len(Blockchain) == 0 {
-		generateGenesisBlock()
+		Blockchain = append(Blockchain, core.GenerateGenesisBlock(Node.Consensus, 1))
 	}
-}
-
-func generateGenesisBlock() {
-	t := time.Now()
-	genesisBlock := core.Block{}
-	genesisBlock = core.Block{0, t.String(), 0, core.CalculateHash(genesisBlock), "", ""}
-	Blockchain = append(Blockchain, genesisBlock)
 }
 
 func HostLoad() {
@@ -277,11 +283,13 @@ func connect() {
 		log.Fatalln(err)
 	}
 
+	//TEM QUE PEGAR ALGUM RETORNO DA NEW STREAM
+
 	// Create a buffered stream so that read and writes are non blocking.
 	rw := bufio.NewReadWriter(bufio.NewReader(s), bufio.NewWriter(s))
 
 	// Create a thread to read and write data.
-	//go WriteData(rw) //ESCREVE
+	go WriteData(rw) //ESCREVE
 	go ReadData(rw) //ESCUTA
 
 	select {} // hang forever
