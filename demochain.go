@@ -9,7 +9,7 @@ import (
 	"github.com/joho/godotenv"
 	core "core"
 	network "network"
-	storage "storage"
+	host "host"
 )
 
 func main() {
@@ -58,20 +58,29 @@ func main() {
 	nodePathBlockchainFile := os.Getenv("PATH_BLOCKCHAIN_FILE")
 	nodeHLNodes						 := os.Getenv("HL_NODES")
 	nodeConsensus					 := os.Getenv("CONSENSUS")
+	nodeDifficulty				 := os.Getenv("DIFFICULTY")
 
-	node := core.NodeLoad(nodeIP, nodePort, nodeNetworkName, nodePathPrivateKey, nodeCryptographicType, nodeCryptographicBits, nodeEDNodeTarget, nodePathBlockchainFile, nodeHLNodes, nodeConsensus)
+	node := core.NodeLoad(nodeIP, nodePort, nodeNetworkName, nodePathPrivateKey, nodeCryptographicType, nodeCryptographicBits, nodeEDNodeTarget, nodePathBlockchainFile, nodeHLNodes, nodeConsensus, nodeDifficulty)
 
 	// Make a host that listens on the given multiaddress
-	ha, err := network.MakeBasicHost(node)
+	peer, err := network.MakeBasicHost(node)
 	if err != nil {
 		log.Fatal(err)
 	}
 
-	fullAddr := network.MakeFullAddr(ha)
+	fullAddr := network.MakeFullAddr(peer)
 	log.Println(fullAddr)
 
-	storage.Node = node
-	storage.Host = ha
-	storage.BlockchainLoad()
-	storage.HostLoad()
+	host.Init(node, peer)
+
+	host.BlockchainLoad()
+
+	if *peerIdParm == 1 {
+			host.HostHandler() //ESCUTA OUTRAS CONEXOES
+	} else {
+			host.Connect() //SOMENTE CONECTA
+	}
+
+	select {}
+
 }

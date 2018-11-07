@@ -36,7 +36,7 @@ func IsBlockValid(newBlock, oldBlock Block, consensus int) bool {
 		return false
 	}
 
-	if calculateHash(newBlock, consensus) != newBlock.Hash {
+	if calculateHash(newBlock.Data, newBlock.PrevHash, newBlock.Nonce, consensus) != newBlock.Hash {
 		return false
 	}
 
@@ -44,9 +44,9 @@ func IsBlockValid(newBlock, oldBlock Block, consensus int) bool {
 }
 
 // SHA256 hashing
-func calculateHash(block Block, consensus int) string {
+func calculateHash(data int, prevHash string, nonce string, consensus int) string {
 
-	record := makeRecord(block)
+	record := makeRecord(data, prevHash, nonce)
 
 	//POW
 		if consensus == 1 {
@@ -58,8 +58,10 @@ func calculateHash(block Block, consensus int) string {
 		return ""
 }
 
-func makeRecord(block Block) string {
-		return strconv.Itoa(block.Index) + block.Timestamp + strconv.Itoa(block.Data) + block.PrevHash + block.Nonce
+func makeRecord(data int, prevHash string, nonce string) string {
+		//return strconv.Itoa(block.Index) + block.Timestamp + strconv.Itoa(block.Data) + block.PrevHash + block.Nonce
+		return strconv.Itoa(data) + prevHash + nonce
+		//return block.Nonce
 }
 
 func isHashValid(hash string, difficulty int) bool {
@@ -68,7 +70,7 @@ func isHashValid(hash string, difficulty int) bool {
 }
 
 // create a new block using previous block's hash
-func GenerateBlock(oldBlock Block, data int, consensus int, difficulty int) Block {
+func GenerateBlock(oldBlock Block, data int, newHash string, nonce string, consensus int, difficulty int) Block {
 
 	var newBlock Block
 
@@ -81,30 +83,54 @@ func GenerateBlock(oldBlock Block, data int, consensus int, difficulty int) Bloc
 	newBlock.Consensus  = consensus
 	newBlock.Difficulty = difficulty
 
+	newBlock.Hash				= newHash
+	newBlock.Nonce			= nonce
+
+  return newBlock
+}
+
+/*func MinerBlock(data int, consensus int, difficulty int) (string, string) {
 	//PoW
+	var hash string
+	var nonce string
 	if consensus == 1 {
 		for i := 0; ; i++ {
 	          hex := fmt.Sprintf("%x", i)
-	          newBlock.Nonce = hex
-	          if !isHashValid(calculateHash(newBlock, newBlock.Consensus), newBlock.Difficulty) {
-	                  fmt.Println(calculateHash(newBlock, newBlock.Consensus), " do more work!")
-	                  time.Sleep(time.Second)
+	          nonce = hex
+	          if !isHashValid(calculateHash(data, nonce, consensus), difficulty) {
+	                  fmt.Println(calculateHash(data, nonce, consensus), " do more work!")
+	                  //time.Sleep(time.Second)
 	                  continue
 	          } else {
-	                  fmt.Println(calculateHash(newBlock, newBlock.Consensus), " work done!")
-	                  newBlock.Hash = calculateHash(newBlock, newBlock.Consensus)
+	                  fmt.Println(calculateHash(data, nonce, consensus), " work done!")
+	                  hash = calculateHash(data, nonce, consensus)
 	                  break
 	          }
 
 	  }
 	}
-  return newBlock
+
+	return hash, nonce;
+}*/
+
+func MinerBlockLoop(i int, data int, prevHash string, consensus int, difficulty int) (bool, string, string) {
+	hex := fmt.Sprintf("%x", i)
+	nonce := hex
+	if !isHashValid(calculateHash(data, prevHash, nonce, consensus), difficulty) {
+					fmt.Println(calculateHash(data, prevHash, nonce, consensus), " do more work!")
+					//time.Sleep(time.Second)
+					return false, "", ""
+	} else {
+					fmt.Println(calculateHash(data, prevHash, nonce, consensus), " work done!")
+					hash := calculateHash(data, prevHash, nonce, consensus)
+					return true, hash, nonce
+	}
 }
 
 
 func GenerateGenesisBlock(consensus int, difficulty int) Block {
 	t := time.Now()
 	genesisBlock := Block{}
-	genesisBlock = Block{0, t.String(), 0, calculateHash(genesisBlock, consensus), "", consensus, difficulty, ""}
+	genesisBlock = Block{0, t.String(), 0, calculateHash(0, "", "0", consensus), "", consensus, difficulty, ""}
 	return genesisBlock
 }

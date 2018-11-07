@@ -28,9 +28,10 @@ type Node struct {
 	Permissioned int //0 NAO e 1 SIM
 	HLNodes []hlNode
 	Consensus int //1 pow | 2 pos | 3 pbft | 4 bftraft | 5 ripple
+	Difficulty int
 }
 
-func nodeObjectCreate(ip string, port int, networkName protocol.ID, publicKey crypto.PubKey, privateKey crypto.PrivKey, cryptographicType int, cryptographicBits int, elTarget string, pathBlockchainFile string, hlNodes []hlNode, consensus int) (Node) {
+func nodeObjectCreate(ip string, port int, networkName protocol.ID, publicKey crypto.PubKey, privateKey crypto.PrivKey, cryptographicType int, cryptographicBits int, elTarget string, pathBlockchainFile string, hlNodes []hlNode, consensus int, difficulty int) (Node) {
 	var node Node
 	node.IP 							  = ip
 	node.Port 						  = port
@@ -43,19 +44,21 @@ func nodeObjectCreate(ip string, port int, networkName protocol.ID, publicKey cr
 	node.PathBlockchainFile = pathBlockchainFile
 	node.HLNodes 						= hlNodes
 	node.Consensus					= consensus
+	node.Difficulty					= difficulty
 
 	return node
 }
 
-func NodeLoad(ip string, port string, networkName string, pathKey string, cryptographicType string, cryptographicBits string, elTarget string, pathBlockchainFile string, hlNodes string, consensus string) (Node) {
+func NodeLoad(ip string, port string, networkName string, pathKey string, cryptographicType string, cryptographicBits string, elTarget string, pathBlockchainFile string, hlNodes string, consensus string, difficulty string) (Node) {
 	portInt, _ 							:= strconv.Atoi(port)
 	cryptographicTypeInt, _ := strconv.Atoi(cryptographicType)
 	cryptographicBitsInt, _ := strconv.Atoi(cryptographicBits)
-	consensusInt, _ := strconv.Atoi(consensus)
+	consensusInt, _ 				:= strconv.Atoi(consensus)
+	difficultyInt, _ 				:= strconv.Atoi(difficulty)
 
 	pub, priv := getPrivateKey(pathKey, cryptographicTypeInt, cryptographicBitsInt)
 
-	return nodeObjectCreate(ip, portInt, protocol.ID(networkName), pub, priv, cryptographicTypeInt, cryptographicBitsInt, elTarget, pathBlockchainFile, formatHLNodes(hlNodes), consensusInt)
+	return nodeObjectCreate(ip, portInt, protocol.ID(networkName), pub, priv, cryptographicTypeInt, cryptographicBitsInt, elTarget, pathBlockchainFile, formatHLNodes(hlNodes), consensusInt, difficultyInt)
 }
 
 func formatHLNodes(hlNodes string) ([] hlNode) {
