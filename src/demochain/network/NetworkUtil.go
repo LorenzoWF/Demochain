@@ -4,33 +4,29 @@ import(
 	"context"
 	host "github.com/libp2p/go-libp2p-host"
 	"fmt"
-	//"io"
-	//"io/ioutil"
 	"log"
-	//"crypto/rand"
-	//mrand "math/rand"
-	//crypto "github.com/libp2p/go-libp2p-crypto"
 	libp2p "github.com/libp2p/go-libp2p"
 	ma "github.com/multiformats/go-multiaddr"
-
-	core "core"
+	core "demochain/core"
 )
 
 // makeBasicHost creates a LibP2P host with a random peer ID listening on the
 //func MakeBasicHost(listenIP string, listenPort int, priv crypto.PrivKey) (host.Host, error) {
-func MakeBasicHost(node core.Node) (host.Host, error) {
+func MakeBasicHost(node *core.Node) (host.Host, error) {
 
 	log.Println("Configurando Peer")
 
 	opts := []libp2p.Option{
-		libp2p.ListenAddrStrings(fmt.Sprintf("/ip4/%s/tcp/%d", node.IP, node.Port)),
-		libp2p.Identity(node.PrivateKey),
+		libp2p.ListenAddrStrings(fmt.Sprintf("/ip4/%s/tcp/%d", node.GetIP(), node.GetPort())),
+		libp2p.Identity(node.GetPrivateKey()),
 	}
 
 	basicHost, err := libp2p.New(context.Background(), opts...)
 	if err != nil {
 		return nil, err
 	}
+
+	node.SetTarget(basicHost.ID().Pretty())
 
 	return basicHost, nil
 }
