@@ -11,10 +11,10 @@ import(
 )
 
 // makeBasicHost creates a LibP2P host with a random peer ID listening on the
-//func MakeBasicHost(listenIP string, listenPort int, priv crypto.PrivKey) (host.Host, error) {
+
 func MakeBasicHost(node *core.Node) (host.Host, error) {
 
-	log.Println("Configurando Peer")
+	log.Println("Config Node")
 
 	opts := []libp2p.Option{
 		libp2p.ListenAddrStrings(fmt.Sprintf("/ip4/%s/tcp/%d", node.GetIP(), node.GetPort())),

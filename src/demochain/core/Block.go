@@ -22,10 +22,6 @@ type Block struct {
 	Target	  string
 }
 
-func (block Block) getBlockPublic() {
-
-}
-
 func (block Block) GetIndex() (int) {
 		return block.Index
 }
@@ -113,6 +109,21 @@ func calculateHash(data string, prevHash string, nonce string, consensusType int
 			h.Write([]byte(record))
 			hashed := h.Sum(nil)
 			return hex.EncodeToString(hashed)
+		} else if consensusType == 2 {
+			h := sha256.New()
+			h.Write([]byte(record))
+			hashed := h.Sum(nil)
+			return hex.EncodeToString(hashed)
+		} else if consensusType == 3 {
+			h := sha256.New()
+			h.Write([]byte(record))
+			hashed := h.Sum(nil)
+			return hex.EncodeToString(hashed)
+		} else {
+			h := sha256.New()
+			h.Write([]byte(record))
+			hashed := h.Sum(nil)
+			return hex.EncodeToString(hashed)
 		}
 		return ""
 }
@@ -121,9 +132,22 @@ func makeRecord(data string, prevHash string, nonce string) string {
 		return data + prevHash + nonce
 }
 
-func isHashValid(hash string, difficulty int) bool {
-        prefix := strings.Repeat("0", difficulty)
-        return strings.HasPrefix(hash, prefix)
+func isHashValid(hash string, consensus Consensus) bool {
+
+				if consensus.GetType() == 1 {
+
+						difficulty := consensus.GetDifficulty()
+						prefix := strings.Repeat("0", difficulty)
+		        return strings.HasPrefix(hash, prefix)
+
+				} else if consensus.GetType() == 2 {
+					return true
+				} else if consensus.GetType() == 3 {
+					return true
+				} else {
+					return true
+				}
+				return false
 }
 
 // create a new block using previous block's hash
@@ -136,10 +160,11 @@ func GenerateBlock(oldBlock Block, data string, newHash string, nonce string, co
 }
 
 //Proof of Work
-func MinerBlockLoop(i int, data string, prevHash string, consensus Consensus) (bool, string, string) {
+func MakeBlockLoop(i int, data string, prevHash string, consensus Consensus) (bool, string, string) {
 	hex := fmt.Sprintf("%x", i)
 	nonce := hex
-	if !isHashValid(calculateHash(data, prevHash, nonce, consensus.GetType()), consensus.GetDifficulty()) {
+
+	if !isHashValid(calculateHash(data, prevHash, nonce, consensus.GetType()), consensus) {
 					//fmt.Println(calculateHash(data, prevHash, nonce, consensus.Type), " do more work!")
 					//time.Sleep(time.Second)
 					return false, "", ""
@@ -150,6 +175,24 @@ func MinerBlockLoop(i int, data string, prevHash string, consensus Consensus) (b
 	}
 }
 
+//POS e PBFT
+func ProcessHash(data string, prevHash string, consensus Consensus) (bool, string) {
+	if !isHashValid(calculateHash(data, prevHash, "", consensus.GetType()), consensus) {
+					return false, ""
+	} else {
+					hash := calculateHash(data, prevHash, "", consensus.GetType())
+					return true, hash
+	}
+}
+
+func ValidatePBFT(numberAccept int, numberNoAccept int) (bool) {
+		var thirdPart float32
+		thirdPart = float32(numberAccept) / float32(3)
+		if float32(numberNoAccept) >= thirdPart {
+				return false
+		}
+		return true
+}
 
 func GenerateGenesisBlock(consensus Consensus, target string) Block {
 	t := time.Now()

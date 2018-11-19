@@ -1,0 +1,1 @@
+SELECT block->'Index' AS Index, block->'PrevHash' AS PrevHash, block->'Hash' AS Hash FROM beach_water WHERE (block->'Hash' ? '000fa086cc2e67239c26b037df1f6c6a7d2b3bf66da7bc462ea817c63ffb7b36' or block->'PrevHash' ? '000fa086cc2e67239c26b037df1f6c6a7d2b3bf66da7bc462ea817c63ffb7b36') order by block->'Index' asc;
